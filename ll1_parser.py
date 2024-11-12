@@ -1,19 +1,18 @@
-# Import necessary libraries
 from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
 
-# Read grammar from file
+
 grammar_file = input('***THIS IS A SIMPLE LL(1) PARSER***\nPlease, input the grammar file\t: ')
 input_string = input('Please, input the string\t\t: ')
 
-# Read the grammar from file
+# read grammar
 grammar = {}
 with open(grammar_file, 'r') as f:
     for line in f:
         line = line.strip()
         if line == '':
             continue
-        # Handle both '→' and '->' as separators
+        # both '→' and '->' can be separators
         if '→' in line:
             lhs, rhs = line.split('→')
         elif '->' in line:
@@ -29,7 +28,7 @@ with open(grammar_file, 'r') as f:
         else:
             grammar[lhs] = productions
 
-# Terminals and non-terminals
+
 non_terminals = list(grammar.keys())
 terminals = set()
 for prods in grammar.values():
@@ -39,9 +38,8 @@ for prods in grammar.values():
                 terminals.add(symbol)
 terminals = list(terminals)
 
-# LL(1) Parsing Table
-# As per the provided FIRST and FOLLOW sets, the parsing table is:
 
+# parse table
 parsing_table = {
     'S': {
         'a': 'aSe',
@@ -60,21 +58,21 @@ parsing_table = {
     }
 }
 
-# Append $ to input string to signify end of input
-input_string += '$'
-input_ptr = 0  # Pointer to the input string
 
-# Root of the parse tree
+input_string += '$'
+input_ptr = 0  
+
+# root of parse tree
 root = Node('S')
 
-# Stack for parsing
+# stack for parsing
 stack = []
-# Initialize the stack with the start symbol and $
-# Each element in the stack is a tuple (symbol, node)
+# initialize the stack with the start symbol and $
+# each element in the stack is a tuple (symbol, node)
 stack.append(('$', None))
 stack.append(('S', root))
 
-# Function to perform LL(1) parsing
+# function to perform LL(1) parsing
 def parse():
     global input_ptr
     current_symbol = input_string[input_ptr]
@@ -85,7 +83,7 @@ def parse():
             return root
         elif top_symbol in terminals or top_symbol == '$':
             if top_symbol == current_symbol:
-                # Terminal matched, move input pointer
+                # terminal matched, move input pointer
                 input_ptr += 1
                 current_symbol = input_string[input_ptr]
             else:
@@ -94,14 +92,14 @@ def parse():
         elif top_symbol in non_terminals:
             if current_symbol in parsing_table[top_symbol]:
                 production = parsing_table[top_symbol][current_symbol]
-                # Create child nodes for the production symbols
+                # create child nodes for the production symbols
                 children = []
                 for symbol in production[::-1]:
                     child_node = Node(symbol)
                     children.insert(0, child_node)
-                # Attach child nodes to the current node
+                # attach child nodes to the current node
                 node.children = children
-                # Push RHS of production onto the stack in reverse order
+                # push RHS of production onto the stack in reverse order
                 for symbol, child_node in zip(production[::-1], children):
                     stack.append((symbol, child_node))
             else:
@@ -117,16 +115,13 @@ def parse():
         print('Error: input not fully consumed.')
         return None
 
-# Start parsing
+# start parsing
 parse_tree_root = parse()
 
-# If parse tree is built, display it
+# if parse tree is built, display it
 if parse_tree_root:
     print('\nVisual of The Resulting Parse Tree:')
     for pre, fill, node in RenderTree(parse_tree_root):
         print("%s%s" % (pre, node.name))
-    # Optionally, export the parse tree to a file
-    # Uncomment the next line if you have Graphviz installed
-    # DotExporter(parse_tree_root).to_picture("parse_tree.png")
 else:
     print('Parsing failed due to errors.')
